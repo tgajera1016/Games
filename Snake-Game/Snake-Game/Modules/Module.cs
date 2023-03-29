@@ -14,6 +14,7 @@ namespace Snake_Game.Modules
         public override void Load()
         {
             Bind<MainViewModel>().ToSelf().InSingletonScope();
+            Bind<GameViewModel>().ToSelf().InSingletonScope();
         }
     }
 }

@@ -25,5 +25,10 @@ namespace Snake_Game.ViewModels
         /// Main view model
         /// </summary>
         public static MainViewModel MainViewModel => Kernel.Get<MainViewModel>();
+
+        /// <summary>
+        /// Game view model
+        /// </summary>
+        public static GameViewModel GameViewModel => Kernel.Get<GameViewModel>();
     }
 }
