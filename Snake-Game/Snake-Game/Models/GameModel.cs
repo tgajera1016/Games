@@ -39,7 +39,7 @@ namespace Snake_Game.Models
         /// <summary>
         /// Current snake direction
         /// </summary>
-        private Direction _currentDirection = Direction.Unknown;
+        private Key _currentDirection = Key.Unknown;
 
         /// <summary>
         /// Cancellation token to stop updating snake display
@@ -54,7 +54,29 @@ namespace Snake_Game.Models
         /// <summary>
         /// Public event on snake update
         /// </summary>
-        public event EventHandler<System.EventArgs> OnSnakeUpdate;
+        public event EventHandler<System.EventArgs> SnakeUpdateEvent;
+
+        /// <summary>
+        /// Public event on game over
+        /// </summary>
+        public event EventHandler<System.EventArgs> GameOverEvent;
+
+        /// <summary>
+        /// Public event on game start
+        /// </summary>
+        public event EventHandler GameStartEvent;
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public GameModel()
+        {
+            UpdateSnake();
+        }
 
         #endregion
 
@@ -74,21 +96,23 @@ namespace Snake_Game.Models
         /// <param name="boardSize"></param>
         public void Start(System.Drawing.Size boardSize)
         {
-            UpdateSnake();
-
             _boardSize = boardSize;
+            Initialize();
+        }
 
-            Snake.Clear();
-            Snake.Add(GenerateRandomNode(Colors.Red));
-            OnSnakeUpdate?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
-
+        /// <summary>
+        /// Restart the game
+        /// </summary>
+        public void Restart()
+        {
+            Initialize();
         }
 
         /// <summary>
         /// Change direction of the snake
         /// </summary>
         /// <param name="direction"></param>
-        public void ChangeDirection(Direction direction)
+        public void ChangeDirection(Key direction)
         {
             _currentDirection = direction;
         }
@@ -98,13 +122,25 @@ namespace Snake_Game.Models
         #region Private Methods
 
         /// <summary>
+        /// Initialize game
+        /// </summary>
+        private void Initialize()
+        {
+            GameStartEvent?.Invoke(this, System.EventArgs.Empty);
+
+            Snake.Clear();
+            Snake.Add(GenerateRandomNode(Colors.Red));
+            SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
+        }
+
+        /// <summary>
         /// Reset game model
         /// </summary>
         private void Reset()
         {
             Snake.Clear();
             Snake.Add(new Node(-100, -100, NodeSize, NodeSize, new SolidColorBrush(Colors.Red)));
-            OnSnakeUpdate?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
+            SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
         }
 
         /// <summary>
@@ -119,8 +155,6 @@ namespace Snake_Game.Models
             return new Node(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
         }
 
-
-
         /// <summary>
         /// Update snake
         /// </summary>
@@ -132,19 +166,19 @@ namespace Snake_Game.Models
                 {
                     switch (_currentDirection)
                     {
-                        case Direction.Left:
+                        case Key.Left:
                             UpdateSnake(-SnakeStep, 0);
                             break;
-                        case Direction.Right:
+                        case Key.Right:
                             UpdateSnake(SnakeStep, 0);
                             break;
-                        case Direction.Up:
+                        case Key.Up:
                             UpdateSnake(0, -SnakeStep);
                             break;
-                        case Direction.Down:
+                        case Key.Down:
                             UpdateSnake(0, SnakeStep);
                             break;
-                        case Direction.Unknown:
+                        case Key.Unknown:
                         default:
                             UpdateSnake(0, 0);
                             break;
@@ -182,12 +216,13 @@ namespace Snake_Game.Models
 
                 Snake[0].UpdateNode(newX, newY);
                 Snake[0].UpdateNode(new SolidColorBrush(Colors.Red));
-                OnSnakeUpdate?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
+                SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
 
                 if (IsCollide(newX, newY))
                 {
-                    // Todo: reset the game or restart
-                    _currentDirection = Direction.Unknown;
+                    Reset();
+                    GameOverEvent?.Invoke(this, System.EventArgs.Empty);
+                    _currentDirection = Key.Unknown;
                 }
             }
             catch (Exception e)
@@ -205,10 +240,10 @@ namespace Snake_Game.Models
         /// <returns></returns>
         private bool IsCollide(int x, int y)
         {
-            if (x <= 1 || x >= _boardSize.Width - NodeSize - 1)
+            if (x <= 1 || x >= _boardSize.Width - NodeSize)
                 return true;
 
-            if (y <= 1 || y >= _boardSize.Height - NodeSize - 1)
+            if (y <= 1 || y >= _boardSize.Height - NodeSize)
                 return true;
 
             return false;

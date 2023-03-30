@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Snake_Game.EventArgs;
-using Snake_Game.Models;
+using Key = Snake_Game.Models.Key;
 
 namespace Snake_Game.ViewModels
 {
@@ -16,6 +18,31 @@ namespace Snake_Game.ViewModels
         /// Key pressed event
         /// </summary>
         public event EventHandler OnKeyPress;
+
+        /// <summary>
+        /// Window width
+        /// </summary>
+        public int WindowWidth => 256;
+
+        /// <summary>
+        /// Window height
+        /// </summary>
+        public int WindowHeight => 256;
+
+        /// <summary>
+        /// Main window and game board margin
+        /// </summary>
+        public int Margin => 8;
+
+        /// <summary>
+        /// Game board width
+        /// </summary>
+        public int GameBoardWidth => WindowWidth - 2 * Margin;
+
+        /// <summary>
+        /// Game board width
+        /// </summary>
+        public int GameBoardHeight => WindowHeight - 2 * Margin;
 
         /// <summary>
         /// Up key pressed command
@@ -38,6 +65,16 @@ namespace Snake_Game.ViewModels
         public ICommand RightKeyPressCommand { get; set; }
 
         /// <summary>
+        /// Escape key press
+        /// </summary>
+        public ICommand EscapeKeyPressCommand { get; set; }
+
+        /// <summary>
+        /// Enter key press
+        /// </summary>
+        public ICommand EnterKeyPressCommand { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public MainViewModel()
@@ -45,25 +82,37 @@ namespace Snake_Game.ViewModels
             // Invoke OnKeyPress for Up
             UpKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() {Direction = Direction.Up});
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() {Key = Key.Up});
             });
 
             // Invoke OnKeyPress for Down
             DownKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Direction = Direction.Down });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Down });
             });
 
             // Invoke OnKeyPress for Left
             LeftKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Direction = Direction.Left });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Left });
             });
 
             // Invoke OnKeyPress for Right
             RightKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Direction = Direction.Right });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Right });
+            });
+
+            // Invoke OnKeyPress for Enter
+            EnterKeyPressCommand = new RelayCommand(() =>
+            {
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Enter });
+            });
+
+            // Kill the application
+            EscapeKeyPressCommand = new RelayCommand(() =>
+            {
+                Application.Current.Shutdown();
             });
         }
     }

@@ -8,8 +8,8 @@ namespace Snake_Game.EventArgs
     public class KeyPressEventArgs : System.EventArgs
     {
         /// <summary>
-        /// Direction
+        /// Key
         /// </summary>
-        public Direction Direction { get; set; }
+        public Key Key { get; set; }
     }
 }

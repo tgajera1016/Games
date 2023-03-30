@@ -1,14 +1,15 @@
 ﻿namespace Snake_Game.Models
 {
     /// <summary>
-    /// Direction enumerator
+    /// Key enumerator
     /// </summary>
-    public enum Direction
+    public enum Key
     {
         Left,
         Right,
         Up,
         Down,
+        Enter,
         Unknown
     }
 }

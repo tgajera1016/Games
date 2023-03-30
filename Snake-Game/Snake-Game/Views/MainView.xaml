@@ -7,14 +7,18 @@
         xmlns:views="clr-namespace:Snake_Game.Views"
         mc:Ignorable="d"
         DataContext="{Binding MainViewModel, Source={StaticResource Locator}}" 
-        Title="Snake-Game" WindowStyle="None">
+        Title="Snake-Game" WindowStyle="None" ResizeMode="NoResize" Background="RoyalBlue" WindowStartupLocation="CenterScreen"
+        Width="{Binding WindowWidth}"
+        Height="{Binding WindowHeight}">
     <Window.InputBindings>
         <KeyBinding Key="Up" Command="{Binding UpKeyPressCommand}"/>
         <KeyBinding Key="Down" Command="{Binding DownKeyPressCommand}"/>
         <KeyBinding Key="Left" Command="{Binding LeftKeyPressCommand}"/>
         <KeyBinding Key="Right" Command="{Binding RightKeyPressCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding EscapeKeyPressCommand}"/>
+        <KeyBinding Key="Enter" Command="{Binding EnterKeyPressCommand}"/>
     </Window.InputBindings>
-    <Grid>
+    <Grid Margin="{Binding Margin}">
         <views:GameView></views:GameView>
     </Grid>
 </Window>
