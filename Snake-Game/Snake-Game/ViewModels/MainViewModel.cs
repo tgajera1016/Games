@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Snake_Game.EventArgs;
-using Key = Snake_Game.Models.Key;
 
 namespace Snake_Game.ViewModels
 {
@@ -14,10 +12,7 @@ namespace Snake_Game.ViewModels
     /// </summary>
     public class MainViewModel : ObservableRecipient
     {
-        /// <summary>
-        /// Key pressed event
-        /// </summary>
-        public event EventHandler OnKeyPress;
+        #region Public Properties
 
         /// <summary>
         /// Window width
@@ -43,6 +38,19 @@ namespace Snake_Game.ViewModels
         /// Game board width
         /// </summary>
         public int GameBoardHeight => WindowHeight - 2 * Margin;
+
+        #endregion
+
+        #region Public Events
+
+        /// <summary>
+        /// Key pressed event
+        /// </summary>
+        public event EventHandler OnKeyPress;
+
+        #endregion
+
+        #region Public Commands
 
         /// <summary>
         /// Up key pressed command
@@ -74,6 +82,10 @@ namespace Snake_Game.ViewModels
         /// </summary>
         public ICommand EnterKeyPressCommand { get; set; }
 
+        #endregion
+
+        #region Constructor
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -82,31 +94,31 @@ namespace Snake_Game.ViewModels
             // Invoke OnKeyPress for Up
             UpKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() {Key = Key.Up});
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Models.Key.Up });
             });
 
             // Invoke OnKeyPress for Down
             DownKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Down });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Models.Key.Down });
             });
 
             // Invoke OnKeyPress for Left
             LeftKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Left });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Models.Key.Left });
             });
 
             // Invoke OnKeyPress for Right
             RightKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Right });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Models.Key.Right });
             });
 
             // Invoke OnKeyPress for Enter
             EnterKeyPressCommand = new RelayCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Key.Enter });
+                OnKeyPress?.Invoke(this, new KeyPressEventArgs() { Key = Models.Key.Enter });
             });
 
             // Kill the application
@@ -115,5 +127,7 @@ namespace Snake_Game.ViewModels
                 Application.Current.Shutdown();
             });
         }
+
+        #endregion
     }
 }

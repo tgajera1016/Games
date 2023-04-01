@@ -4,13 +4,13 @@ using Snake_Game.Models;
 namespace Snake_Game.EventArgs
 {
     /// <summary>
-    /// Game model event args
+    /// Snake message event args
     /// </summary>
-    public class GameModelEventArgs : System.EventArgs
+    public class SnakeMessageEventArgs : System.EventArgs
     {
         /// <summary>
-        /// Snake node list
+        /// Snake (list of nodes)
         /// </summary>
-        public List<Node> SnakeNodeList { get; set; } = new();
+        public List<INode> Snake { get; set; }
     }
 }

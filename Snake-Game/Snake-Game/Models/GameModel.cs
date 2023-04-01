@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using Snake_Game.EventArgs;
 
 namespace Snake_Game.Models
 {
+    /// <summary>
+    /// Game model class
+    /// </summary>
     public class GameModel
     {
         #region Private Members
@@ -24,7 +28,7 @@ namespace Snake_Game.Models
         /// <summary>
         /// Snake body
         /// </summary>
-        private List<Node> Snake { get; } = new();
+        private List<INode> Snake { get; } = new();
 
         /// <summary>
         /// Snake speed
@@ -50,6 +54,11 @@ namespace Snake_Game.Models
         #endregion
 
         #region Public EventHandler
+
+        /// <summary>
+        /// Public event on fruit update
+        /// </summary>
+        public event EventHandler<System.EventArgs> FruitUpdateEvent;
 
         /// <summary>
         /// Public event on snake update
@@ -97,6 +106,8 @@ namespace Snake_Game.Models
         public void Start(System.Drawing.Size boardSize)
         {
             _boardSize = boardSize;
+
+            // Initialize game
             Initialize();
         }
 
@@ -126,11 +137,19 @@ namespace Snake_Game.Models
         /// </summary>
         private void Initialize()
         {
+            // Raise game start event
             GameStartEvent?.Invoke(this, System.EventArgs.Empty);
 
+            // Clear snake
             Snake.Clear();
-            Snake.Add(GenerateRandomNode(Colors.Red));
-            SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
+            // Add a random node to snake
+            Snake.Add(GenerateRandomSnakeNode(Colors.Red));
+            // Raise snake update event
+            SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
+
+            // Generate a fruit and raise fruit update event
+            var fruitNode = GenerateRandomFruitNode(Colors.DarkOrange);
+            FruitUpdateEvent?.Invoke(this, new FruitMessageEventArgs() { Fruit = fruitNode });
         }
 
         /// <summary>
@@ -138,21 +157,39 @@ namespace Snake_Game.Models
         /// </summary>
         private void Reset()
         {
+            // Update current direction to unknown 
+            _currentDirection = Key.Unknown;
+
+            // Clear snake node list
             Snake.Clear();
-            Snake.Add(new Node(-100, -100, NodeSize, NodeSize, new SolidColorBrush(Colors.Red)));
-            SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
+
+            // Raise snake update event
+            SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
         }
 
         /// <summary>
-        /// 
+        /// Generate random snake node
         /// </summary>
         /// <param name="color"></param>
         /// <returns></returns>
-        private Node GenerateRandomNode(Color color)
+        private INode GenerateRandomSnakeNode(Color color)
         {
             var randomX = new Random().Next(NodeSize, _boardSize.Width - NodeSize);
             var randomY = new Random().Next(NodeSize, _boardSize.Height - NodeSize);
-            return new Node(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
+            return new SnakeNode(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
+        }
+
+        /// <summary>
+        /// Generate random fruit node
+        /// </summary>
+        /// <param name="color"></param>
+        /// <returns></returns>
+        private INode GenerateRandomFruitNode(Color color)
+        {
+            var randomX = new Random().Next(NodeSize, _boardSize.Width - NodeSize);
+            var randomY = new Random().Next(NodeSize, _boardSize.Height - NodeSize);
+            return new FruitNode(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
+            
         }
 
         /// <summary>
@@ -162,29 +199,35 @@ namespace Snake_Game.Models
         {
             _ = Task.Run(async () =>
             {
-                while (!_snakeUpdateCancellationToken.IsCancellationRequested)
+                try
                 {
-                    switch (_currentDirection)
+                    while (!_snakeUpdateCancellationToken.IsCancellationRequested)
                     {
-                        case Key.Left:
-                            UpdateSnake(-SnakeStep, 0);
-                            break;
-                        case Key.Right:
-                            UpdateSnake(SnakeStep, 0);
-                            break;
-                        case Key.Up:
-                            UpdateSnake(0, -SnakeStep);
-                            break;
-                        case Key.Down:
-                            UpdateSnake(0, SnakeStep);
-                            break;
-                        case Key.Unknown:
-                        default:
-                            UpdateSnake(0, 0);
-                            break;
-                    }
+                        switch (_currentDirection)
+                        {
+                            case Key.Left:
+                                UpdateSnake(-SnakeStep, 0);
+                                break;
+                            case Key.Right:
+                                UpdateSnake(SnakeStep, 0);
+                                break;
+                            case Key.Up:
+                                UpdateSnake(0, -SnakeStep);
+                                break;
+                            case Key.Down:
+                                UpdateSnake(0, SnakeStep);
+                                break;
+                            case Key.Unknown:
+                            default:
+                                break;
+                        }
 
-                    await Task.Delay(_snakeSpeed, _snakeUpdateCancellationToken);
+                        await Task.Delay(_snakeSpeed, _snakeUpdateCancellationToken);
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
                 }
             }, _snakeUpdateCancellationToken);
         }
@@ -198,53 +241,59 @@ namespace Snake_Game.Models
         {
             try
             {
+                // Do not update snake if key is not pressed
                 if (x == 0 && y == 0)
                     return;
 
-                var nNodes = Snake.Count;
-                if (nNodes == 0)
-                    return;
+                // Updates snake nodes based on the current direction 
+                foreach (var node in Snake)
+                    if(node is SnakeNode snakeNode)
+                        snakeNode.Move(x, y);
 
-                for (var nodeIndex = 1; nodeIndex < nNodes; ++nodeIndex)
-                {
-                    Snake[nodeIndex] = Snake[nodeIndex - 1];
-                    Snake[nodeIndex].UpdateNode(new SolidColorBrush(Colors.Yellow));
-                }
+                // Raise update snake event
+                SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
 
-                var newX = Snake[0].X + x;
-                var newY = Snake[0].Y + y;
+                // Check for the collision 
+                if (Snake.Count <= 0) return;
+                if (!IsCollide(Snake[0])) return;
 
-                Snake[0].UpdateNode(newX, newY);
-                Snake[0].UpdateNode(new SolidColorBrush(Colors.Red));
-                SnakeUpdateEvent?.Invoke(this, new GameModelEventArgs { SnakeNodeList = Snake });
-
-                if (IsCollide(newX, newY))
-                {
-                    Reset();
-                    GameOverEvent?.Invoke(this, System.EventArgs.Empty);
-                    _currentDirection = Key.Unknown;
-                }
+                // Reset game if collide
+                Reset();
+                // Raise game over event 
+                GameOverEvent?.Invoke(this, System.EventArgs.Empty);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                MessageBox.Show(e.ToString());
             }
         }
 
         /// <summary>
         /// Check whether snake is collide to the border
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
+        /// <param name="node"></param>
         /// <returns></returns>
-        private bool IsCollide(int x, int y)
+        private bool IsCollide(INode node)
         {
-            if (x <= 1 || x >= _boardSize.Width - NodeSize)
-                return true;
+            try
+            {
+                // Check for the border collision 
+                if (node is SnakeNode snakeNode)
+                {
+                    var x = snakeNode.X;
+                    var y = snakeNode.Y;
 
-            if (y <= 1 || y >= _boardSize.Height - NodeSize)
-                return true;
+                    if (x <= 1 || x >= _boardSize.Width - NodeSize)
+                        return true;
+
+                    if (y <= 1 || y >= _boardSize.Height - NodeSize)
+                        return true;
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
 
             return false;
         }

@@ -8,7 +8,25 @@
              DataContext="{Binding GameViewModel, Source={StaticResource Locator}}">
     <Grid>
         <TextBlock Text="{Binding GameMessage, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"  TextAlignment="Center" Foreground="White" FontSize="21" FontFamily="Arial" FontWeight="ExtraBold" ></TextBlock>
-        <ItemsControl ItemsSource="{Binding SnakeBody}">
+        <ItemsControl ItemsSource="{Binding Snake}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Ellipse Width="{Binding Width}" Height="{Binding Height}" Stroke="Black" StrokeThickness="1" Fill="{Binding Color}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl ItemsSource="{Binding Fruit}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Canvas/>

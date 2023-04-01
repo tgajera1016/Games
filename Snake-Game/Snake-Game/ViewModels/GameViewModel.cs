@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snake_Game.EventArgs;
 using Snake_Game.Models;
-using Size = System.Drawing.Size;
 
 namespace Snake_Game.ViewModels
 {
     /// <summary>
     /// Game view model class
     /// </summary>
-    public class GameViewModel : ObservableRecipient
+    public class GameViewModel : ObservableObject
     {
         #region Private Properties
 
@@ -22,33 +19,44 @@ namespace Snake_Game.ViewModels
         /// </summary>
         private readonly GameModel _gameModel = new ();
 
-        /// <summary>
-        /// Red brush
-        /// </summary>
-        private readonly SolidColorBrush _redBrush = new (Colors.Red);
-
-        /// <summary>
-        /// Yellow brush
-        /// </summary>
-        private readonly SolidColorBrush _yellowBrush = new(Colors.Yellow);
-
         #endregion
 
         #region Public Properties
 
         /// <summary>
-        /// Snake body
+        /// Snake
         /// </summary>
-        public ObservableCollection<Node> SnakeBody { get; set; } = new();
+        private ObservableCollection<INode> _snake = new ();
+        public ObservableCollection<INode> Snake
+        {
+            get => _snake;
+            set
+            {
+                if (value == null) return;
+                _snake = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Fruit
+        /// </summary>
+        private ObservableCollection<INode> _fruit = new();
+        public ObservableCollection<INode> Fruit
+        {
+            get => _fruit;
+            set
+            {
+                if (value == null) return;
+                _fruit = value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Game message
         /// </summary>
         private string _gameMessage = string.Empty;
-
-        /// <summary>
-        /// Game message property
-        /// </summary>
         public string GameMessage
         {
             get => _gameMessage;
@@ -61,6 +69,8 @@ namespace Snake_Game.ViewModels
 
         #endregion
 
+        #region Constructor
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -70,10 +80,15 @@ namespace Snake_Game.ViewModels
             _gameModel.GameStartEvent += OnGameStart;
             _gameModel.GameOverEvent += OnGameOver;
             _gameModel.SnakeUpdateEvent += OnSnakeUpdate;
-            _gameModel.Start(new Size(mainViewModel.GameBoardWidth, mainViewModel.GameBoardHeight));
+            _gameModel.FruitUpdateEvent += OnFruitUpdate;
+            _gameModel.Start(new System.Drawing.Size(mainViewModel.GameBoardWidth, mainViewModel.GameBoardHeight));
 
             mainViewModel.OnKeyPress += OnKeyDown;
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Hide new game message when game starts
@@ -110,20 +125,37 @@ namespace Snake_Game.ViewModels
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (eventArgs is GameModelEventArgs gameModelEventArgs)
+                try
                 {
-                    var snakeNodeList = gameModelEventArgs.SnakeNodeList;
-                    var nNodes = snakeNodeList.Count;
-                    if (nNodes > 0)
-                    {
-                        SnakeBody.Clear();
-                        for (var nodeIndex = 0; nodeIndex < nNodes; ++nodeIndex)
-                        {
-                            // Todo: do not change the color
-                            snakeNodeList[nodeIndex].UpdateNode(nodeIndex == 0 ? _redBrush : _yellowBrush);
-                            SnakeBody.Add(snakeNodeList[nodeIndex]);
-                        }
-                    }
+                    if (eventArgs is not SnakeMessageEventArgs snakeMessageEventArgs) return;
+                    if (snakeMessageEventArgs.Snake == null) return;
+                    Snake = new ObservableCollection<INode>(snakeMessageEventArgs.Snake);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Update view based on the fruit update
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="eventArgs"></param>
+        private void OnFruitUpdate(object sender, System.EventArgs eventArgs)
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    if (eventArgs is not FruitMessageEventArgs fruitMessageEventArgs) return;
+                    if (fruitMessageEventArgs.Fruit == null) return;
+                    Fruit = new ObservableCollection<INode> { fruitMessageEventArgs.Fruit };
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
                 }
             }));
         }
@@ -143,5 +175,6 @@ namespace Snake_Game.ViewModels
             }
         }
 
+        #endregion
     }
 }
