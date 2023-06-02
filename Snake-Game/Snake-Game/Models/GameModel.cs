@@ -23,17 +23,22 @@ namespace Snake_Game.Models
         /// <summary>
         /// Number of steps snake takes at a time
         /// </summary>
-        private const int SnakeStep = 1;
+        private const int SnakeStep = 30;
 
         /// <summary>
-        /// Snake body
+        /// Snake
         /// </summary>
         private List<INode> Snake { get; } = new();
 
         /// <summary>
+        /// Fruit 
+        /// </summary>
+        private INode Fruit { get; set; }
+
+        /// <summary>
         /// Snake speed
         /// </summary>
-        private readonly TimeSpan _snakeSpeed = TimeSpan.FromMilliseconds(10);
+        private readonly TimeSpan _snakeSpeed = TimeSpan.FromMilliseconds(1000);
 
         /// <summary>
         /// Board size
@@ -44,6 +49,16 @@ namespace Snake_Game.Models
         /// Current snake direction
         /// </summary>
         private Key _currentDirection = Key.Unknown;
+
+        /// <summary>
+        /// Snake color
+        /// </summary>
+        private readonly string _snakeColor = "#FF0000";
+
+        /// <summary>
+        /// Fruit color
+        /// </summary>
+        private readonly string _fruitColor = "#FFFF00";
 
         /// <summary>
         /// Cancellation token to stop updating snake display
@@ -143,13 +158,13 @@ namespace Snake_Game.Models
             // Clear snake
             Snake.Clear();
             // Add a random node to snake
-            Snake.Add(GenerateRandomSnakeNode(Colors.Red));
+            Snake.Insert(0, GenerateRandomSnakeNode(_snakeColor));
             // Raise snake update event
             SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
 
             // Generate a fruit and raise fruit update event
-            var fruitNode = GenerateRandomFruitNode(Colors.DarkOrange);
-            FruitUpdateEvent?.Invoke(this, new FruitMessageEventArgs() { Fruit = fruitNode });
+            Fruit = GenerateRandomFruitNode(_fruitColor);
+            FruitUpdateEvent?.Invoke(this, new FruitMessageEventArgs { Fruit = Fruit });
         }
 
         /// <summary>
@@ -162,9 +177,14 @@ namespace Snake_Game.Models
 
             // Clear snake node list
             Snake.Clear();
-
             // Raise snake update event
             SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
+
+            // Clear the fruit 
+            Fruit = null;
+            // Raise fruit update event
+            FruitUpdateEvent?.Invoke(this, new FruitMessageEventArgs { Fruit = Fruit});
+
         }
 
         /// <summary>
@@ -172,11 +192,11 @@ namespace Snake_Game.Models
         /// </summary>
         /// <param name="color"></param>
         /// <returns></returns>
-        private INode GenerateRandomSnakeNode(Color color)
+        private INode GenerateRandomSnakeNode(string color)
         {
             var randomX = new Random().Next(NodeSize, _boardSize.Width - NodeSize);
             var randomY = new Random().Next(NodeSize, _boardSize.Height - NodeSize);
-            return new SnakeNode(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
+            return new SnakeNode(randomX, randomY, NodeSize, NodeSize, color);
         }
 
         /// <summary>
@@ -184,12 +204,11 @@ namespace Snake_Game.Models
         /// </summary>
         /// <param name="color"></param>
         /// <returns></returns>
-        private INode GenerateRandomFruitNode(Color color)
+        private INode GenerateRandomFruitNode(string color)
         {
             var randomX = new Random().Next(NodeSize, _boardSize.Width - NodeSize);
             var randomY = new Random().Next(NodeSize, _boardSize.Height - NodeSize);
-            return new FruitNode(randomX, randomY, NodeSize, NodeSize, new SolidColorBrush(color));
-            
+            return new FruitNode(randomX, randomY, NodeSize, NodeSize, color);
         }
 
         /// <summary>
@@ -245,17 +264,38 @@ namespace Snake_Game.Models
                 if (x == 0 && y == 0)
                     return;
 
+                var nNodes = Snake.Count;
+                if (nNodes <= 0) return;
+
                 // Updates snake nodes based on the current direction 
-                foreach (var node in Snake)
-                    if(node is SnakeNode snakeNode)
-                        snakeNode.Move(x, y);
+                for (var nodeIndex = nNodes - 1; nodeIndex > 0; --nodeIndex)
+                    SwapCoordinates(Snake[nodeIndex-1], Snake[nodeIndex]);
+
+                ((SnakeNode)Snake[0]).Move(x, y);
 
                 // Raise update snake event
                 SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
 
+                // Check if fruit can be eaten
+                if (CanEatFruit(Snake[0], Fruit))
+                {
+                    if (Fruit is FruitNode fruitNode)
+                    {
+                        // Add the last fruit location in front of the snake list and update the rest of the nodes
+                        Snake.Insert(0, new SnakeNode(fruitNode.X, fruitNode.Y, fruitNode.Width, fruitNode.Height, fruitNode.Color));
+
+                        // Raise update snake event
+                        SnakeUpdateEvent?.Invoke(this, new SnakeMessageEventArgs { Snake = Snake });
+                    }
+
+                    // Generate a new fruit node
+                    Fruit = GenerateRandomFruitNode(_fruitColor);
+                    // Raise update fruit event
+                    FruitUpdateEvent?.Invoke(this, new FruitMessageEventArgs {Fruit = Fruit});
+                }
+
                 // Check for the collision 
-                if (Snake.Count <= 0) return;
-                if (!IsCollide(Snake[0])) return;
+                if (!IsCollideWithBorder(Snake[0], _boardSize)) return;
 
                 // Reset game if collide
                 Reset();
@@ -268,12 +308,20 @@ namespace Snake_Game.Models
             }
         }
 
+        private void SwapCoordinates(INode sourceNode, INode destinationNode)
+        {
+            if (sourceNode is not SnakeNode sourceSnakeNode) return;
+            if (destinationNode is not SnakeNode destinationSnakeNode) return;
+            destinationSnakeNode.Update(sourceSnakeNode.X, sourceSnakeNode.Y);
+        }
+
         /// <summary>
         /// Check whether snake is collide to the border
         /// </summary>
         /// <param name="node"></param>
+        /// <param name="borderSize"></param>
         /// <returns></returns>
-        private bool IsCollide(INode node)
+        private bool IsCollideWithBorder(INode node, System.Drawing.Size borderSize)
         {
             try
             {
@@ -283,10 +331,10 @@ namespace Snake_Game.Models
                     var x = snakeNode.X;
                     var y = snakeNode.Y;
 
-                    if (x <= 1 || x >= _boardSize.Width - NodeSize)
+                    if (x <= 1 || x >= borderSize.Width - NodeSize)
                         return true;
 
-                    if (y <= 1 || y >= _boardSize.Height - NodeSize)
+                    if (y <= 1 || y >= borderSize.Height - NodeSize)
                         return true;
                 }
             }
@@ -296,6 +344,19 @@ namespace Snake_Game.Models
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Check weather it can eat fruit or not
+        /// </summary>
+        /// <returns></returns>
+        private bool CanEatFruit(INode snakeNode, INode fruitNode)
+        {
+            if (snakeNode is not SnakeNode sNode) return false;
+            if (fruitNode is not FruitNode fNode) return false;
+
+             var distance = Math.Sqrt((sNode.X - fNode.X) * (sNode.X - fNode.X) + (sNode.Y - fNode.Y) * (sNode.Y - fNode.Y));
+            return distance <= NodeSize;
         }
 
         #endregion

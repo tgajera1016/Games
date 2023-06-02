@@ -30,7 +30,7 @@ namespace Snake_Game.Models
         /// <summary>
         /// Node color
         /// </summary>
-        public SolidColorBrush Color { get; private set; }
+        public string Color { get; private set; }
 
         /// <summary>
         /// Constructor
@@ -40,7 +40,7 @@ namespace Snake_Game.Models
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="color"></param>
-        public FruitNode(int x, int y, int width, int height, SolidColorBrush color)
+        public FruitNode(int x, int y, int width, int height, string color)
         {
             X = x;
             Y = y;
@@ -49,9 +49,17 @@ namespace Snake_Game.Models
             Height = height;
         }
 
-        public FruitNode()
+        /// <summary>
+        /// copy constructor
+        /// </summary>
+        /// <param name="existingFruitNode"></param>
+        public FruitNode(FruitNode existingFruitNode)
         {
-
+            X = existingFruitNode.X;
+            Y = existingFruitNode.Y;
+            Color = existingFruitNode.Color;
+            Width = existingFruitNode.Width;
+            Height = existingFruitNode.Height;
         }
     }
 }

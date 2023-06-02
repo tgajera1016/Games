@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snake_Game.EventArgs;
 using Snake_Game.Models;
@@ -128,8 +129,9 @@ namespace Snake_Game.ViewModels
                 try
                 {
                     if (eventArgs is not SnakeMessageEventArgs snakeMessageEventArgs) return;
-                    if (snakeMessageEventArgs.Snake == null) return;
-                    Snake = new ObservableCollection<INode>(snakeMessageEventArgs.Snake);
+                    Snake = snakeMessageEventArgs.Snake == null
+                        ? new ObservableCollection<INode>()
+                        : new ObservableCollection<INode>(snakeMessageEventArgs.Snake);
                 }
                 catch (Exception e)
                 {
@@ -150,8 +152,9 @@ namespace Snake_Game.ViewModels
                 try
                 {
                     if (eventArgs is not FruitMessageEventArgs fruitMessageEventArgs) return;
-                    if (fruitMessageEventArgs.Fruit == null) return;
-                    Fruit = new ObservableCollection<INode> { fruitMessageEventArgs.Fruit };
+                    Fruit = fruitMessageEventArgs.Fruit == null
+                        ? new ObservableCollection<INode>()
+                        : new ObservableCollection<INode> { fruitMessageEventArgs.Fruit };
                 }
                 catch (Exception e)
                 {

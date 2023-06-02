@@ -30,7 +30,7 @@ namespace Snake_Game.Models
         /// <summary>
         /// Node color
         /// </summary>
-        public SolidColorBrush Color { get; private set; }
+        public string Color { get; private set; }
 
         /// <summary>
         /// Constructor
@@ -40,7 +40,7 @@ namespace Snake_Game.Models
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="color"></param>
-        public SnakeNode(int x, int y, int width, int height, SolidColorBrush color)
+        public SnakeNode(int x, int y, int width, int height, string color)
         {
             X = x;
             Y = y;
@@ -49,10 +49,26 @@ namespace Snake_Game.Models
             Height = height;
         }
 
+        /// <summary>
+        /// Move node
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         public void Move(int x, int y)
         {
             X += x;
             Y += y;
+        }
+
+        /// <summary>
+        /// Update node
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public void Update(int x, int y)
+        {
+            X = x;
+            Y = y;
         }
     }
 }
